@@ -6,52 +6,49 @@ export https_proxy="http://127.0.0.1:12450/"
 export http_proxy="http://127.0.0.1:12450/"
 
 download() {
-    local url="$1"
-    local dest_dir="$2"
-    local filename="$3"
-    mkdir -p "$dest_dir"
-    local dest="$dest_dir/$filename"
+    local url="$1"; local dest_dir="$2"; local filename="$3"
+    mkdir -p "$dest_dir"; local dest="$dest_dir/$filename"
     if [ -f "$dest" ] && [ -s "$dest" ]; then
-        local size=$(du -h "$dest" | cut -f1)
-        echo "  [SKIP] $filename ($size)"
+        echo "  [SKIP] $filename ($(du -h "$dest" | cut -f1))"
         return 0
     fi
     echo "  [DOWNLOAD] $filename → $dest_dir"
-    curl -L --progress-bar -o "$dest" "$url" 2>&1
-    local ret=$?
-    if [ $ret -eq 0 ] && [ -s "$dest" ]; then
-        local final_size=$(du -h "$dest" | cut -f1)
-        echo "  [DONE] $filename ($final_size)"
-    else
-        echo "  [FAILED] $filename"
-        return 1
-    fi
+    curl -L --progress-bar -o "$dest" "$url"
+    [ -s "$dest" ] && echo "  [DONE] $filename ($(du -h "$dest" | cut -f1))" || { echo "  [FAILED]"; return 1; }
 }
 
 echo "============================================"
-echo "Downloading Additional Models"
+echo " 可选额外模型下载"
+echo " (核心模型请先运行 download_models.sh)"
 echo "============================================"
-echo ""
-
-echo "[1/3] Gemma 3 12B FP8 Text Encoder (~11GB)"
-download \
-    "https://huggingface.co/Comfy-Org/ltx-2/resolve/main/split_files/text_encoders/gemma_3_12B_it_fp8_scaled.safetensors" \
-    "$MODELS_DIR/text_encoders" \
-    "gemma_3_12B_it_fp8_scaled.safetensors"
 
 echo ""
-echo "[2/3] LTX-2.3 Spatial Upscaler x2"
+echo "[1/3] LTX-2.3 空间超分 x2 (可选)"
 download \
     "https://huggingface.co/Lightricks/LTX-2.3/resolve/main/ltx-2.3-spatial-upscaler-x2-1.0.safetensors" \
     "$MODELS_DIR/latent_upscale_models" \
     "ltx-2.3-spatial-upscaler-x2-1.0.safetensors"
 
 echo ""
-echo "[3/3] LTX-2.3 Audio VAE"
+echo "[2/3] LTX-2.3 Audio VAE (可选, 如不需要音频可不下载)"
 download \
     "https://huggingface.co/Kijai/LTX2.3_comfy/resolve/main/vae/LTX23_audio_vae_bf16.safetensors" \
     "$MODELS_DIR/vae" \
     "LTX23_audio_vae_bf16.safetensors"
 
 echo ""
-echo "Done!"
+echo "[3/3] IP-Adapter 插件安装 (可选, 如不需要人脸参考可不装)"
+if [ -d "$HOME/comfy/ComfyUI/custom_nodes/ComfyUI_IPAdapter_plus" ]; then
+    echo "  [SKIP] ComfyUI_IPAdapter_plus 已安装"
+else
+    echo "  [INSTALL] 安装 ComfyUI_IPAdapter_plus..."
+    cd "$HOME/comfy/ComfyUI/custom_nodes"
+    git clone https://github.com/cubiq/ComfyUI_IPAdapter_plus.git
+    echo "  [DONE] IP-Adapter 插件已安装, 重启 ComfyUI 生效"
+fi
+
+echo ""
+echo "Done! 已下载的额外模型:"
+[ -f "$MODELS_DIR/latent_upscale_models/ltx-2.3-spatial-upscaler-x2-1.0.safetensors" ] && echo "  ✅ 空间超分 x2" || echo "  ❌ 空间超分 x2"
+[ -f "$MODELS_DIR/vae/LTX23_audio_vae_bf16.safetensors" ]                 && echo "  ✅ Audio VAE"        || echo "  ❌ Audio VAE"
+[ -d "$HOME/comfy/ComfyUI/custom_nodes/ComfyUI_IPAdapter_plus" ]           && echo "  ✅ IP-Adapter 插件"   || echo "  ❌ IP-Adapter 插件"
