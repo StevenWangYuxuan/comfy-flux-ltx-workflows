@@ -47,7 +47,7 @@
 
 ### FLUX→LTX 图生视频 — 超跑静止→启动→弹射
 
-![FLUX 生成的首帧画面](assets/flux_frame_00010_.png)
+![FLUX 生成的首帧画面](assets/flux_ltx_i2v_frame.png)
 
 *工作流: `flux_ltx_i2v_v2.json` | 首帧生成后的画面*
 
