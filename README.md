@@ -197,7 +197,7 @@ comfy/
 
 ### 模型找不到
 
-参见 [download_models.sh](download_models.sh) 中的目录映射表。
+参见 [download_models.sh](download_models.sh) / [download_models.py](download_models.py)中的目录映射表。
 
 ---
 
