@@ -103,7 +103,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 | `flux_ltx_i2v.json` | 图生视频(基线) | 32 | 24+ GB | 📦 存档 |
 | `flux_ltx_i2v_optimized.json` | 图生视频(实验) | 33 | 24+ GB | ⚠️ 实验 |
 
-> ★ `flux_ltx_i2v_v2.json` 是推荐版本。完整参数文档见 [`flux_ltx_i2v_文档.md`](flux_ltx_i2v_文档.md)。
+> ★ `flux_ltx_i2v_v2.json` 是推荐版本。完整参数文档见 [`flux_ltx_i2v_v2_文档.md`](flux_ltx_i2v_v2_文档.md)。
 
 ---
 
@@ -119,7 +119,7 @@ comfy/
 ├── download_extras.sh     # 可选模型 + 插件
 ├── build_optimized_workflow.py
 ├── fix_workflow_links.py
-├── flux_ltx_i2v_文档.md  # FLUX→LTX 完整参数手册
+├── flux_ltx_i2v_v2_文档.md  # FLUX→LTX v2 完整参数手册
 ├── README.md
 └── LICENSE
 ```
