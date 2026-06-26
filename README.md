@@ -1,243 +1,386 @@
-# ComfyUI FLUX + LTX Video 工作流
+# 🎬 ComfyUI FLUX + LTX Video — AI 图片转视频工作流
 
-基于 ComfyUI 搭建的 **FLUX.1-DEV 文生图 → LTX Video 2.3 图生视频** 级联工作流项目。一句话描述：**用自然语言描述一个画面，AI 先生成静态图，再把它"动起来"变成视频。**
+> **一句话说清楚**：给 AI 写一段话描述你想要的画面，它先生成一张高清图片，再让这张图片"动起来"变成视频。
+
+这个项目包含 6 个 ComfyUI 工作流，从最简单的"文字→图片"到最复杂的"文字→图片→视频"都有。
 
 ---
 
-## 目录
+## 📖 目录
 
-- [项目结构](#-项目结构)
-- [工作流详解](#-工作流详解)
-- [辅助脚本](#-辅助脚本)
-- [模型依赖](#-模型依赖)
-- [快速开始](#-快速开始)
+- [能做什么？](#-能做什么)
+- [效果预览](#-效果预览)
+- [项目文件说明](#-项目文件说明)
+- [新手入门（5 分钟上手）](#-新手入门5-分钟上手)
+- [工作流详细介绍](#-工作流详细介绍)
+- [常见问题排查](#-常见问题排查)
+- [模型文件清单](#-模型文件清单)
 - [硬件要求](#-硬件要求)
-- [版本演进](#-版本演进)
 
 ---
 
-## 📁 项目结构
+## 🎯 能做什么？
+
+| 你想要的效果 | 用这个工作流 | 难度 |
+|-------------|-------------|------|
+| 输入一段文字，输出一张图 | `flux_text2img` | ⭐ 入门 |
+| 输入一张图 + 一段文字，输出变体图 | `flux_img2img` | ⭐ 入门 |
+| 输入文字描述，输出 3 秒短视频 | `ltx_txt2vid` | ⭐⭐ 进阶 |
+| 输入两段文字，先生成首帧再变成视频（画质最高） | `flux_ltx_i2v_v2` ★ | ⭐⭐⭐ 高级 |
+
+---
+
+## 🖼️ 效果预览
+
+### FLUX 文生图 — "羽毛球运动员跳起扣杀"
+
+![FLUX 文生图示例](assets/flux_text2img_demo.png)
+
+*工作流: `flux_text2img.json` | 分辨率: 1344×768 | 28 步采样*
+
+### FLUX 图生图 — 参考图 + 电影风格重绘
+
+![FLUX 图生图示例](assets/flux_img2img_demo.png)
+
+*工作流: `flux_img2img.json` | 分辨率: 960×544 | denoise=0.65*
+
+### FLUX→LTX 图生视频 — 超跑静止→启动→弹射
+
+![FLUX 生成的首帧画面](assets/flux_ltx_i2v_frame.png)
+
+*工作流: `flux_ltx_i2v_v2.json` | 首帧生成后的画面*
+
+🎥 **生成的视频**：[点击下载观看](assets/hypercar_demo.mp4) — 超跑从静止到弹射起步的 3 秒连贯视频
+
+---
+
+## 📁 项目文件说明
 
 ```
-comfy/
+comfy/                                    # 🏠 项目根目录
 │
-├── 🎨 工作流文件 (6个)
-│   ├── flux_text2img.json            # FLUX 文生图
-│   ├── flux_img2img.json             # FLUX 图生图（以图为参考生成新图）
-│   ├── flux_ltx_i2v.json             # FLUX→LTX 组合基线版
-│   ├── flux_ltx_i2v_optimized.json   # FLUX→LTX 组合优化版（STG时空引导）
-│   ├── flux_ltx_i2v_v2.json          # FLUX→LTX 组合 v2 推荐版 ★
-│   └── ltx_txt2vid.json              # LTX 纯文生视频（无FLUX阶段，省显存）
+├── 📖 README.md                          # 👈 你正在看的这个文件
+├── 📖 flux_ltx_i2v_文档.md              # 组合工作流完整参数文档（进阶阅读）
 │
-├── 📖 文档
-│   ├── README.md                     # 本文件 — 项目总览
-│   └── flux_ltx_i2v_文档.md         # 组合工作流完整中文文档（节点级详参）
+├── 🎨 工作流文件（直接拖进 ComfyUI 就能用）
+│   ├── flux_text2img.json               # FLUX 文生图 — "一段话 → 一张图"
+│   ├── flux_img2img.json                # FLUX 图生图 — "参考图 + 一段话 → 新图"
+│   ├── flux_ltx_i2v.json                # FLUX→LTX 基线版 — "两段话 → 3秒视频"
+│   ├── flux_ltx_i2v_optimized.json      # FLUX→LTX 优化版 — 加入 STG 增强（实验性）
+│   ├── flux_ltx_i2v_v2.json             # FLUX→LTX v2 ★ 推荐 — 最稳定的视频生成
+│   └── ltx_txt2vid.json                 # LTX 文生视频 — "一段话 → 短视频"（省显存）
 │
-├── 🔧 工具脚本 (5个)
-│   ├── download_models.py            # Python 版模型下载脚本
-│   ├── download_models.sh            # Shell 版模型下载脚本
-│   ├── download_extras.sh            # LTX 额外模型下载（VAE / LoRA / 投影层）
-│   ├── build_optimized_workflow.py   # 从基线版自动生成优化版/STG版工作流
-│   └── fix_workflow_links.py         # 修复/验证工作流节点间的连接关系
+├── 🔧 工具脚本（一般不需要手动运行）
+│   ├── download_models.py               # 下载 FLUX 模型（Python 版）
+│   ├── download_models.sh               # 下载 FLUX 模型（Shell 版）
+│   ├── download_extras.sh               # 下载 LTX 额外模型
+│   ├── build_optimized_workflow.py      # 自动构建优化版工作流
+│   └── fix_workflow_links.py            # 修复工作流节点连接
 │
-├── ⚙️ 配置
-│   ├── .gitignore                    # Git 忽略规则（排除模型/ComfyUI本体/密钥）
-│   └── .mcp.json                     # ComfyUI MCP 服务器配置（供 Claude Code 调用）
+├── 🖼️ assets/                           # 示例图片和视频
+│   ├── flux_text2img_demo.png           # 文生图效果展示
+│   ├── flux_img2img_demo.png            # 图生图效果展示
+│   ├── flux_ltx_i2v_frame.png           # 图生视频首帧展示
+│   └── hypercar_demo.mp4                # 最终视频效果
 │
-└── 📦 ComfyUI/                       # ComfyUI 主程序（通过 gitignore 排除，不入库）
-    ├── models/                       # 模型文件 (~78GB，不入库)
-    │   ├── diffusion_models/         # UNet / DiT 扩散模型
-    │   ├── text_encoders/            # 文本编码器（CLIP / T5 / Gemma）
-    │   ├── vae/                      # VAE 图像编解码器
-    │   └── loras/                    # LoRA 微调权重
-    └── custom_nodes/                 # 第三方节点插件
-        ├── ComfyUI-LTXVideo/         # LTX Video 官方节点
-        ├── ComfyUI-GGUF/             # GGUF 量化模型加载
-        └── ComfyUI-KJNodes/          # 工具节点集
+└── ⚙️ 配置文件
+    ├── .gitignore                        # Git 忽略规则（不追踪模型文件/密钥）
+    └── .mcp.json                         # ComfyUI MCP 服务器配置
 ```
 
 ---
 
-## 🎨 工作流详解
+## 🚀 新手入门（5 分钟上手）
 
-### 1. `flux_text2img.json` — FLUX 文生图
+### 第一步：确认模型已下载
 
-> **输入**：文本提示词 → **输出**：1344×768 PNG 图片
+打开终端，检查模型文件是否存在：
 
-纯 FLUX.1-DEV 文生图工作流，11 个节点。适合快速生成高质量单帧图像。
+```bash
+ls ~/comfy/ComfyUI/models/diffusion_models/
+# 应该看到: flux1-dev.safetensors, ltx-2.3-22b-...mxfp8_block32.safetensors
 
-| 参数 | 值 |
-|------|-----|
-| 模型 | flux1-dev (fp8_e4m3fn_fast) |
-| 文本编码 | CLIP-L + T5-XXL FP16, guidance=4.0 |
-| 采样器 | dpmpp_2m + sgm_uniform, 28 步 |
-| 分辨率 | 1344 × 768 |
-| 主题 | 羽毛球运动员扣杀场景 |
+ls ~/comfy/ComfyUI/models/text_encoders/
+# 应该看到: clip_l.safetensors, t5xxl_fp8_e4m3fn.safetensors, gemma_3_12B_it_fp8_scaled.safetensors
+```
 
-### 2. `flux_img2img.json` — FLUX 图生图
+> 如果文件不存在，运行 `python3 download_models.py` 下载（约 78GB，需要代理）。
 
-> **输入**：参考图片 + 文本提示词 → **输出**：960×544 PNG 图片
-
-在参考图基础上根据提示词重新生成，denoise=0.65 保留原图结构同时允许较大变化。
-
-| 参数 | 值 |
-|------|-----|
-| 模型 | flux1-dev (fp8_e4m3fn_fast) |
-| 文本编码 | CLIP-L + T5-XXL **FP8**（省显存） |
-| 采样器 | dpmpp_2m + sgm_uniform, 25 步, denoise=0.65 |
-| 分辨率 | 960 × 544 |
-
-### 3. `flux_ltx_i2v.json` — FLUX→LTX 组合基线版 📦
-
-> **输入**：两段文本（画面描述 + 运动描述） → **输出**：960×544 MP4 视频 (~3秒)
-
-32 节点，最早完整版。FLUX 生成首帧 → VAEDecode → LTX 生成 73 帧视频。
-
-| 阶段 | 参数 |
-|------|------|
-| FLUX | T5 FP16, dpmpp_2m 28步, guidance=4.0 |
-| LTX | NAG(12, 0.30, 2.5), CFG引导, 25步, I2V strength=0.80 |
-
-### 4. `flux_ltx_i2v_optimized.json` — 优化版（实验） ⚠️
-
-33 节点。新增 **STG 时空跳跃引导**，参数偏激进。
-
-| 变化 | 基线 → 优化版 |
-|------|---------------|
-| T5 | FP16 → **FP8** |
-| 引导 | CFG → **STG (stg=1.5, rescale=0.7)** |
-| NAG | (12, 0.30, 2.5) → **(13, 0.35, 2.0)** |
-| I2V strength | 0.80 → **0.72** |
-
-### 5. `flux_ltx_i2v_v2.json` — v2 推荐版 ★
-
-> **这是当前推荐使用的版本。** 在优化版基础上回调到保守参数，输出更稳定。
-
-| 变化 | 优化版 → v2 | 原因 |
-|------|-------------|------|
-| NAG scale | 13 → **10** | 减弱引导，减少伪影 |
-| NAG tau | 2.0 → **3.5** | 增强时间平滑 |
-| STG stg | 1.5 → **1.0** | 降低时空锐化，防过曝 |
-| I2V strength | 0.72 → **0.85** | 紧锚定首帧，防漂移 |
-| 步数 | 25 → **30** | 更多去噪，画质更好 |
-| VAE noise | 0.06/0.03 → **0.03/0.015** | 减少残影鬼影 |
-
-### 6. `ltx_txt2vid.json` — LTX 纯文生视频
-
-> **输入**：单段文本 → **输出**：768×512 MP4 (~2秒)
-
-17 节点，无需 FLUX 阶段，显存友好（~16-20GB）。适合快速生成短视频。
-
-| 参数 | 值 |
-|------|-----|
-| 文本编码 | Gemma 3 12B FP8 |
-| UNet | LTX-2.3 22B (mxfp8 block32) |
-| 帧数/帧率 | 49 帧 @ 25fps |
-| 采样 | Euler, 20 步, CFG=1.0 |
-| NAG | scale=11, alpha=0.25, tau=2.5 |
-
----
-
-## 🔧 辅助脚本
-
-| 脚本 | 用途 | 用法 |
-|------|------|------|
-| `download_models.py` | 下载 FLUX.1-DEV 全部模型 (~32GB) | `python3 download_models.py` |
-| `download_models.sh` | 同上，Shell 版本 | `bash download_models.sh` |
-| `download_extras.sh` | 下载 LTX 模型（VAE/LoRA/投影层） | `bash download_extras.sh` |
-| `build_optimized_workflow.py` | 基于基线版自动构建优化版工作流，调整 NAG/STG/步数参数 | `python3 build_optimized_workflow.py` |
-| `fix_workflow_links.py` | 验证并修复工作流 JSON 中节点间的 link 连接完整性 | `python3 fix_workflow_links.py` |
-
----
-
-## 🧠 模型依赖
-
-### FLUX.1-DEV（文生图引擎）
-
-| 模型文件 | 大小 | 加载节点 | 用途 |
-|----------|------|----------|------|
-| `flux1-dev.safetensors` | 23 GB | UNETLoader (fp8) | DiT 扩散主干 |
-| `clip_l.safetensors` | 235 MB | DualCLIPLoader | 短文本编码 |
-| `t5xxl_fp8_e4m3fn.safetensors` | 4.6 GB | DualCLIPLoader | 长文本编码 (v2 推荐) |
-| `t5xxl_fp16.safetensors` | 9.2 GB | DualCLIPLoader | 长文本编码 (基线版备用) |
-| `ae.safetensors` | 320 MB | VAELoader | latent ↔ 像素 编解码 |
-
-### LTX Video 2.3（视频生成引擎）
-
-| 模型文件 | 大小 | 加载节点 | 用途 |
-|----------|------|----------|------|
-| `ltx-2.3-22b-...-mxfp8_block32.safetensors` | 23 GB | UNETLoader | 视频 DiT 主干（分块加载） |
-| `gemma_3_12B_it_fp8_scaled.safetensors` | 13 GB | LTXAVTextEncoderLoader | 运动描述编码 |
-| `ltx-2.3_text_projection_bf16.safetensors` | 2.2 GB | LTXAVTextEncoderLoader | Gemma→LTX 维度投影 |
-| `LTX23_video_vae_bf16.safetensors` | 1.4 GB | VAELoader | 视频 latent ↔ 像素 |
-| `ltx-2.3-22b-distilled-lora-..._bf16.safetensors` | 2.5 GB | LTXICLoRALoader | 动态增强 LoRA |
-
-> **总计约 78 GB**（全部已下载并就绪）
-
----
-
-## 🚀 快速开始
-
-### 1. 启动 ComfyUI
+### 第二步：启动 ComfyUI
 
 ```bash
 cd ~/comfy/ComfyUI
 
-# 标准启动
+# 标准启动（推荐 48GB 以上显卡）
 venv/bin/python main.py --listen 127.0.0.1
 
-# 24GB 显存优化启动
+# 24GB 显卡优化启动（RTX 3090/4090）
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
   venv/bin/python main.py --listen 127.0.0.1
 ```
 
-### 2. 加载并运行
+看到 `Starting server` 就说明启动成功了。
 
-浏览器打开 `http://127.0.0.1:8188`，将 `.json` 工作流文件拖入窗口，点击 Queue Prompt。
+### 第三步：打开浏览器
 
-### 3. 选型指南
+在浏览器地址栏输入：**`http://127.0.0.1:8188`**
 
-| 你想做什么 | 用这个文件 | 显存需求 |
-|-----------|-----------|----------|
-| 文生图 | `flux_text2img.json` | 16-20 GB |
-| 图生图 | `flux_img2img.json` | 16-20 GB |
-| **图片变视频（推荐）** | `flux_ltx_i2v_v2.json` ★ | 22-24 GB |
-| 纯文本变视频（省显存） | `ltx_txt2vid.json` | 16-20 GB |
+你会看到 ComfyUI 的图形界面。
+
+### 第四步：加载并运行工作流
+
+1. 把 `.json` 工作流文件**直接拖入**浏览器窗口
+2. 节点图会自动加载，检查一下参数是否符合预期
+3. 点击右侧面板的 **`Queue Prompt`** 按钮
+4. 等待生成完成，图片/视频会自动保存到 `ComfyUI/output/` 目录
+
+> 💡 **第一次用推荐从简单的开始**：先试试 `flux_text2img.json`，确认能正常出图后再试 `flux_ltx_i2v_v2.json`。
+
+---
+
+## 📘 工作流详细介绍
+
+### 1. FLUX 文生图 (`flux_text2img.json`)
+
+> **这是什么**：给 AI 一段描述文字，它给你画出来。
+>
+> **什么时候用**：你想要一张高质量的图，脑子里有画面但不会画。
+
+**怎么用：**
+
+1. 拖入 `flux_text2img.json`
+2. 找到节点 5（`CLIPTextEncodeFlux`），在文本框里写上你的 Prompt
+3. 节点 6 是负向提示词（告诉 AI **不要**画什么）
+4. 节点 8 设置图片尺寸（默认 1344×768）
+5. 点击 Queue Prompt
+
+**使用了什么模型：**
+- 扩散模型：`flux1-dev.safetensors`（23GB，FP8 量化）
+- 文本理解：`clip_l.safetensors`（理解短词）+ `t5xxl_fp16.safetensors`（理解长句）
+- 图像编解码：`ae.safetensors`（320MB）
+
+**关键参数解释：**
+
+| 参数 | 默认值 | 是什么意思 |
+|------|--------|-----------|
+| steps | 28 | 采样步数，越高画质越好但越慢。28 是性价比最高的点 |
+| guidance | 4.0 | Prompt 遵循度，越高 AI 越听话。4.0 是 FLUX 的推荐值 |
+| CFG | 1.0 | FLUX 不需要 CFG，保持 1.0 |
+| width / height | 1344 / 768 | 输出尺寸，越大越吃显存。建议别超过 1600 |
+
+---
+
+### 2. FLUX 图生图 (`flux_img2img.json`)
+
+> **这是什么**：给 AI 一张参考图 + 一段描述，它在原图基础上按你的要求修改。
+>
+> **什么时候用**：你有一张图想"换风格"或"微调"，而不是从零画。
+
+**怎么用：**
+
+1. 拖入 `flux_img2img.json`
+2. 节点 12（`LoadImage`）：点 `choose file` 上传你的参考图
+3. 节点 13（`ImageScale`）：会自动把图片缩放到 960×544
+4. 节点 5（`CLIPTextEncodeFlux`）：写 Prompt 描述你想要的效果
+5. 点击 Queue Prompt
+
+**和文生图的区别：**
+- 多了 `LoadImage` → `ImageScale` → `VAEEncode` 这个"图片输入链"
+- `denoise` 参数 = 0.65，意思是保留 35% 原图信息、65% AI 重新创作
+- 使用 T5 **FP8** 版编码器（比文生图的 FP16 省 4.6GB 显存）
+
+| 参数 | 默认值 | 是什么意思 |
+|------|--------|-----------|
+| denoise | 0.65 | 重绘程度。0=原图不变，1=完全重画。0.55-0.75 是最佳范围 |
+| steps | 25 | 比文生图少 3 步，因为有原图打底不需要那么多次 |
+
+---
+
+### 3. FLUX→LTX 图生视频 v2 ★ (`flux_ltx_i2v_v2.json`)
+
+> **这是什么**：项目最核心的工作流。分两步走——
+> 1. **FLUX 先生成一张静态图**（首帧画面）
+> 2. **LTX 把这张图变成 3 秒视频**（添加运动）
+>
+> **什么时候用**：你想要最高质量的 AI 视频。适合产品展示、概念动画、短视频素材。
+
+**怎么用：**
+
+1. 拖入 `flux_ltx_i2v_v2.json`
+2. **节点 5**（FLUX 正向 Prompt）：描述**首帧画面**——谁、在哪、什么姿势、什么光线
+3. **节点 13**（LTX 正向 Prompt）：描述**接下来发生什么运动**——怎么动、往哪走、多快
+4. 节点 8 设置分辨率（默认 960×544）
+5. 节点 21 设置帧数（73 帧 ≈ 3 秒 @ 24fps）
+6. 点击 Queue Prompt
+
+**Prompt 写作技巧：**
+
+```
+❌ 错误写法（两个 Prompt 写一样的内容）：
+  FLUX: "一辆超跑在公路上飞驰"  
+  LTX:  "一辆超跑在公路上飞驰"     ← 重复了，没用
+
+✅ 正确写法（各司其职）：
+  FLUX: "一辆哑光黑超跑斜停在湿漉漉的沿海公路上，金色夕阳逆光，
+        低角度三/四前侧拍摄，水面反射琥珀色光芒，无人，静止"
+         ↑ 只描述"这一帧"的画面
+
+  LTX:  "超跑停留片刻后 LED 大灯亮起，引擎发出深沉的咆哮，
+        排气管开始发光，后轮突然咬住湿沥青，车辆猛烈弹射起步，
+        水雾和碎石从后轮拱喷出，尾灯拉成红色光带消失在海滨公路尽头"
+         ↑ 只描述"接下来发生的运动"
+```
+
+**v2 版为什么最推荐：**
+
+| 对比项 | 基线版 | 优化版 | v2 ★ |
+|--------|--------|--------|------|
+| 稳定性 | 中等 | 差（容易出伪影） | **最好** |
+| 运动幅度 | 适中 | 大（但可能变形） | **适中偏保守** |
+| 引导方式 | CFG | STG 1.5 | **STG 1.0** |
+| 采样步数 | 25 | 25 | **30**（画质更好） |
+| 首帧锚定 | strength 0.80 | 0.72 | **0.85**（更忠实首帧） |
+
+**关键参数解释：**
+
+| 参数 | 默认值 | 是什么意思 |
+|------|--------|-----------|
+| FLUX steps | 28 | 首帧采样步数，不需要改 |
+| LTX steps | 30 | 视频采样步数，越高运动越细腻 |
+| I2V strength | 0.85 | 首帧锚定强度。0=完全不管首帧，1=死扣首帧。0.80-0.90 最佳 |
+| NAG scale | 10 | 运动引导强度。太低=不动，太高=鬼畜。8-14 是安全范围 |
+| NAG tau | 3.5 | 时间平滑度。越高运动越连贯。2.0-4.0 |
+| STG stg | 1.0 | 时空引导。1.0=标准，1.5=激进（可能过度锐化） |
+| terminal | 0.05 | 去噪终点。越低越干净，但太低会失去细节 |
+| frame_rate | 24 | 帧率，和 CreateVideo 里的 fps 保持一致 |
+| 帧数 | 73 | 73÷24≈3 秒。减少可加速但视频变短 |
+
+---
+
+### 4. LTX 文生视频 (`ltx_txt2vid.json`)
+
+> **这是什么**：跳过 FLUX，直接从文字生成视频。
+>
+> **什么时候用**：显存不够（16-20GB 就能跑），或不需要特别高质量的首帧。
+
+**怎么用：**
+
+1. 拖入 `ltx_txt2vid.json`
+2. 节点 13：写 Prompt（同时描述画面+运动）
+3. 节点 21：设置分辨率和帧数（默认 768×512, 49 帧 ≈ 2 秒）
+4. 点击 Queue Prompt
+
+**和 FLUX→LTX 的区别：**
+- 少了整个 FLUX 阶段（11 个节点），更简单更快
+- 没有参考首帧，画面一致性不如 I2V
+- 显存需求低 ~8GB
+
+---
+
+## 🔧 常见问题排查
+
+### Q: 点击 Queue Prompt 后报错 "CUDA Out of Memory"
+
+**原因**：显存不够。
+
+**解决办法（按优先级）：**
+
+1. **降分辨率**：把 960×544 改成 768×432（FLUX token 减少 ~30%，显存降到 18-20GB）
+2. **加启动参数**：
+   ```bash
+   PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
+     venv/bin/python main.py --listen 127.0.0.1 --novram
+   ```
+3. **关闭其他程序**：关掉浏览器（吃 1-2GB 显存）、IDE 等
+
+### Q: 生成的视频画面闪烁/变形/有鬼影
+
+**可能原因和解决：**
+- **I2V strength 太低**：调到 0.85 或更高
+- **STG 太高**：降到 1.0 或关掉 STGGuider
+- **VAE Decoder Noise 不够**：timestep 调到 0.05，scale 调到 0.025
+- **Prompt 里有矛盾描述**：比如"静止"+"运动"同时出现，AI 会困惑
+
+### Q: 视频第一帧和最后几帧有奇怪残影
+
+- 确保 `last_frame_fix` = **true**（节点 29 LTXVTiledVAEDecode）
+- 减少帧数（73→49）试试
+
+### Q: 画面不够清晰
+
+- 增加 LTX steps（30→35），但会更慢
+- NAG alpha 调高到 0.25（增加锐度）
+- 检查分辨率可被 32 整除（LTX 的硬性要求）
+
+### Q: 启动 ComfyUI 后网页打不开
+
+```bash
+# 检查是否真的在监听
+curl -s http://127.0.0.1:8188 | head -5
+
+# 检查进程
+ps aux | grep main.py
+```
+
+---
+
+## 🧠 模型文件清单
+
+> 这些文件都在 `ComfyUI/models/` 下，**不需要手动管理**。仅作参考。
+
+### FLUX 系列（负责生成图片）
+
+| 文件 | 大小 | 做什么的 |
+|------|------|---------|
+| `diffusion_models/flux1-dev.safetensors` | 23 GB | 🧠 扩散模型大脑，负责"画" |
+| `text_encoders/clip_l.safetensors` | 235 MB | 📖 理解短词和标签 |
+| `text_encoders/t5xxl_fp8_e4m3fn.safetensors` | 4.6 GB | 📖 理解长句描述（v2 推荐） |
+| `text_encoders/t5xxl_fp16.safetensors` | 9.2 GB | 📖 同上，更精确但更吃显存 |
+| `vae/ae.safetensors` | 320 MB | 🖼️ 图像压缩/解压 |
+
+### LTX 系列（负责生成视频）
+
+| 文件 | 大小 | 做什么的 |
+|------|------|---------|
+| `diffusion_models/ltx-2.3-22b-...mxfp8_block32.safetensors` | 23 GB | 🧠 视频扩散模型大脑 |
+| `text_encoders/gemma_3_12B_it_fp8_scaled.safetensors` | 13 GB | 📖 理解运动描述 |
+| `text_encoders/ltx-2.3_text_projection_bf16.safetensors` | 2.2 GB | 🔗 文字到视频的"翻译层" |
+| `vae/LTX23_video_vae_bf16.safetensors` | 1.4 GB | 🎞️ 视频压缩/解压 |
+| `loras/ltx-2.3-22b-distilled-lora-...bf16.safetensors` | 2.5 GB | 💪 动态增强插件 |
+
+**总计：~78 GB**
 
 ---
 
 ## 💻 硬件要求
 
-| GPU | 显存 | FLUX 工作流 | I2V 组合工作流 | 建议 |
-|-----|------|------------|---------------|------|
-| RTX 3090 Ti | 24 GB | ✅ 流畅 | ⚠️ 极限（需优化参数） | 降分辨率至 768×432 |
-| RTX 4090 | 24 GB | ✅ 流畅 | ⚠️ 极限 | 同上 |
-| RTX 6000 Ada / A6000 | 48 GB | ✅ 完美 | ✅ 推荐 | 无限制 |
-| A100 / H100 | 80 GB | ✅ 完美 | ✅ 完美 | 全工作流随便跑 |
+| 显卡 | 显存 | 文生图 | 图生图 | 图生视频 | 纯文生视频 |
+|------|------|--------|--------|----------|-----------|
+| RTX 3060 (12GB) | 12 GB | ❌ | ❌ | ❌ | ❌ |
+| RTX 4070 (12GB) | 12 GB | ❌ | ❌ | ❌ | ❌ |
+| RTX 3090 (24GB) | 24 GB | ✅ | ✅ | ⚠️ 需优化 | ✅ |
+| RTX 4090 (24GB) | 24 GB | ✅ | ✅ | ⚠️ 需优化 | ✅ |
+| A6000 (48GB) | 48 GB | ✅ | ✅ | ✅ | ✅ |
+| A100 (80GB) | 80 GB | ✅ | ✅ | ✅ | ✅ |
 
-24GB 显卡运行 I2V 工作流的详细优化策略见 `.claude/projects/-home-steven-comfy/memory/vram-troubleshooting.md`。
-
----
-
-## 📜 版本演进
-
-```
-2026-06-22  安装 ComfyUI + FLUX Schnell 文生图
-2026-06-23  迁移到 FLUX.1-DEV，下载全部模型 (~32GB)
-2026-06-24  创建 FLUX+LTX 组合基线版 (32节点)
-           修复 T5→Gemma 文本编码器，NAG 参数调优
-           新增纯 LTX 文生视频工作流
-2026-06-25  引入 STG 时空跳跃引导 (33节点)
-           发布优化版 + v2 保守参数版
-           新增 FLUX 图生图工作流，T5 切换至 FP8
-2026-06-26  驱动升级 595→580，编写 VRAM 故障排除文档
-           清理 40GB 冗余模型，整理文档结构
-           项目上传 GitHub
-```
+**24GB 显卡跑图生视频的优化方法：**
+1. 分辨率降到 768×432
+2. 启动时加 `--novram` 参数
+3. 减少帧数（73→49）
+4. 关掉浏览器等吃显存的程序
 
 ---
 
-## 📚 延伸阅读
+## 📜 更新日志
 
-- [`flux_ltx_i2v_文档.md`](flux_ltx_i2v_文档.md) — 32 节点逐一拆解，包含每个节点的参数含义和调优建议
-- 项目 memory 文件位于 `.claude/projects/-home-steven-comfy/memory/`，由 Claude Code 维护
+| 日期 | 做了什么 |
+|------|---------|
+| 2026-06-22 | 搭建 ComfyUI 环境，FLUX Schnell 文生图 |
+| 2026-06-23 | 迁移到 FLUX.1-DEV，下载全部模型 |
+| 2026-06-24 | 创造 FLUX+LTX 组合工作流，Gemma 替代 T5 编码器 |
+| 2026-06-25 | 引入 STG 时空引导，发布 v2 稳定版，FP8 优化 |
+| 2026-06-26 | 清理 40GB 冗余模型，完善文档，上传 GitHub |
+
+---
+
+> 💡 **有疑问？** 先看 `flux_ltx_i2v_文档.md`（完整参数手册），或者在这个仓库提 Issue。
