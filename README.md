@@ -85,7 +85,7 @@ comfy/                                    # 🏠 项目根目录
 │
 └── ⚙️ 配置文件
     ├── .gitignore                        # Git 忽略规则（不追踪模型文件/密钥）
-    └── .mcp.json                         # ComfyUI MCP 服务器配置
+    └── .mcp.json                         # ComfyUI 自动化接口配置
 ```
 
 ---

@@ -18,6 +18,10 @@ temp/
 *.png
 *.jpg
 
+# But keep assets/ (demo images for README)
+!assets/
+!assets/**
+
 # IDE
 .idea/
 .vscode/
