@@ -161,7 +161,7 @@
     },
     {
       "id": 4,
-      "type": "IPAdapter",
+      "type": "IPAdapterAdvanced",
       "pos": [
         430,
         320
@@ -173,7 +173,7 @@
       "flags": {},
       "order": 3,
       "mode": 0,
-      "title": "4. IP-Adapter (人脸特征注入)",
+      "title": "4. IP-Adapter Advanced (concat模式, 防波浪纹)",
       "inputs": [
         {
           "name": "model",
@@ -199,6 +199,22 @@
           "link": null
         },
         {
+          "name": "weight_type",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_type"
+          },
+          "link": null
+        },
+        {
+          "name": "combine_embeds",
+          "type": "COMBO",
+          "widget": {
+            "name": "combine_embeds"
+          },
+          "link": null
+        },
+        {
           "name": "start_at",
           "type": "FLOAT",
           "widget": {
@@ -215,10 +231,10 @@
           "link": null
         },
         {
-          "name": "weight_type",
+          "name": "embeds_scaling",
           "type": "COMBO",
           "widget": {
-            "name": "weight_type"
+            "name": "embeds_scaling"
           },
           "link": null
         }
@@ -233,13 +249,15 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "IPAdapter"
+        "Node name for S&R": "IPAdapterAdvanced"
       },
       "widgets_values": [
-        0.85,
+        0.75,
+        "ease in-out",
+        "concat",
         0.0,
         1.0,
-        "standard"
+        "K+V"
       ]
     },
     {
@@ -286,7 +304,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "1girl, solo, looking at viewer, portrait, upper body, long hair, white dress, lace trim, soft smile, gentle expression, depth of field, bokeh, anime coloring, cel shading, detailed eyes, pastel background, masterpiece, best quality, newest, absurdres, highres"
+        "1girl, solo, looking at viewer, portrait, hoodie, headphones, neon lights, cyberpunk, night city background, purple and blue lighting, serious expression, sharp eyes, anime coloring, detailed eyes, masterpiece, best quality, absurdres"
       ]
     },
     {
@@ -493,7 +511,7 @@
         "Node name for S&R": "KSampler"
       },
       "widgets_values": [
-        42,
+        888,
         25,
         7.0,
         "euler",
