@@ -427,7 +427,7 @@
       "flags": {},
       "order": 7,
       "mode": 0,
-      "title": "8. 采样器 (Euler, 25步, CFG 7)",
+      "title": "8. 采样器 (dpmpp_3m_sde + exponential, 25步, CFG 5)",
       "inputs": [
         {
           "name": "model",
@@ -513,9 +513,9 @@
       "widgets_values": [
         888,
         25,
-        7.0,
-        "euler",
-        "normal",
+        5.0,
+        "dpmpp_3m_sde",
+        "exponential",
         1.0
       ]
     },
@@ -742,7 +742,7 @@
     },
     {
       "id": 4,
-      "title": "🎨 采样 + 输出 — Euler 25步 CFG 7, 896x1152",
+      "title": "🎨 采样 + 输出 — dpmpp_3m_sde+exponential 25步 CFG 5, 896x1152",
       "bounding": [
         1280,
         110,
