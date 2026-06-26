@@ -132,6 +132,11 @@ cd ~/comfy/ComfyUI
 # 标准启动（推荐 48GB 以上显卡）
 venv/bin/python main.py --listen 127.0.0.1
 
+# 作者配置启动 （3090Ti 24GB）
+# --lowvram （显存优化启动参数，程序不再将所有模型都塞进显存，而是在需要用到某个部件（例如文本编码器、UNet模型、VAE模型）时，才将它从内存（RAM）加载到显存（VRAM）中使用）
+source venv/bin/activate
+python main.py --lowvram
+
 # 24GB 显卡优化启动（RTX 3090/4090）
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
   venv/bin/python main.py --listen 127.0.0.1
