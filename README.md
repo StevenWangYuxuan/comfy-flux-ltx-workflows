@@ -60,6 +60,12 @@
 
 *工作流: `anime_portrait.json` | 模型: Animagine XL 4.0 | 分辨率: 896×1152 | Euler 25步*
 
+### IP-Adapter 人脸参考 — 赛博朋克风
+
+![IP-Adapter 示例](assets/ipadapter_portrait_demo.png)
+
+*工作流: `ipadapter_portrait.json` | 参考脸 → 赛博朋克风（卫衣+耳机+霓虹灯）| weight=0.75*
+
 ---
 
 ## 📁 项目文件说明
@@ -89,7 +95,7 @@ comfy/                                    # 🏠 项目根目录
 │
 ├── 🖼️ assets/                           # 示例图片和视频
 │   ├── anime_portrait_demo.png          # 动漫头像效果展示
-│   ├── ipadapter_demo.png               # IP-Adapter 人脸参考效果
+│   ├── ipadapter_portrait_demo.png       # IP-Adapter 人脸参考效果
 │   ├── flux_text2img_demo.png           # 文生图效果展示
 │   ├── flux_img2img_demo.png            # 图生图效果展示
 │   ├── flux_ltx_i2v_frame.png           # 图生视频首帧展示
