@@ -10,6 +10,8 @@
 阶段 2: LTX Video 2.3 图生视频 (节点 12-33)
     └→ 以 FLUX 生成的图片为起点，根据运动 Prompt 生成 73 帧 (≈3秒) 连贯视频
 
+# 具体可参考 flux_ltx_i2v_v2_文档.md
+
 ## 效果预览
 
 ![首帧](../assets/flux_ltx_i2v_frame.png)
