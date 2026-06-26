@@ -1,6 +1,6 @@
 {
   "version": 0.4,
-  "last_node_id": 10,
+  "last_node_id": 8,
   "last_link_id": 10,
   "nodes": [
     {
@@ -68,12 +68,12 @@
       ],
       "size": [
         470,
-        220
+        200
       ],
       "flags": {},
       "order": 1,
       "mode": 0,
-      "title": "2. 正向提示词 (质量标签 + 角色描述 + 风格)",
+      "title": "2. 正向提示词 (Danbooru 标签格式)",
       "inputs": [
         {
           "name": "clip",
@@ -103,7 +103,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "1girl, solo, looking at viewer, portrait, upper body, silver hair, long hair, purple eyes, ahoge, bangs, hair between eyes, hair ribbon, white dress, lace trim, soft smile, gentle expression, depth of field, bokeh, anime coloring, cel shading, line art, detailed eyes, sparkling eyes, light particles, pastel background, gradient sky"
+        "1girl, solo, looking at viewer, portrait, upper body, silver hair, long hair, purple eyes, ahoge, bangs, hair between eyes, hair ribbon, white dress, lace trim, soft smile, gentle expression, depth of field, bokeh, anime coloring, cel shading, line art, detailed eyes, sparkling eyes, light particles, pastel background, gradient sky, masterpiece, best quality, newest, amazing quality, very aesthetic, absurdres, highres"
       ]
     },
     {
@@ -111,11 +111,11 @@
       "type": "CLIPTextEncode",
       "pos": [
         430,
-        290
+        260
       ],
       "size": [
         470,
-        200
+        180
       ],
       "flags": {},
       "order": 2,
@@ -150,7 +150,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "low quality, worst quality, bad anatomy, bad hands, deformed, disfigured, ugly, poorly drawn, extra limbs, missing fingers, fused fingers, too many fingers, photorealistic, 3d, realistic, real life, photograph, monochrome, greyscale, sketch, rough sketch, messy, scribble, noise, grain, blurry, jpeg artifacts, text, watermark, signature, username, censored, mosaic, nsfw"
+        "low quality, worst quality, bad anatomy, bad hands, deformed, disfigured, ugly, poorly drawn, extra limbs, missing fingers, photorealistic, 3d, realistic, real life, photograph, monochrome, greyscale, sketch, rough sketch, messy, noise, grain, blurry, jpeg artifacts, text, watermark, signature, username, censored, mosaic, nsfw"
       ]
     },
     {
@@ -158,7 +158,7 @@
       "type": "EmptyLatentImage",
       "pos": [
         430,
-        530
+        470
       ],
       "size": [
         315,
@@ -167,7 +167,7 @@
       "flags": {},
       "order": 3,
       "mode": 0,
-      "title": "4. 画布 (896×1152 竖版头像)",
+      "title": "4. 画布 (896x1152 竖版头像)",
       "inputs": [
         {
           "name": "width",
@@ -226,7 +226,7 @@
       "flags": {},
       "order": 4,
       "mode": 0,
-      "title": "5. 采样器 (Euler, 25步, CFG 7)",
+      "title": "5. 采样器 (euler + normal, 25步, CFG 7)",
       "inputs": [
         {
           "name": "model",
@@ -512,7 +512,7 @@
   "groups": [
     {
       "id": 1,
-      "title": "📦 模型加载 — Animagine XL 4.0 (SDXL动漫)",
+      "title": "📦 模型 — Animagine XL 4.0 (SDXL 动漫)",
       "bounding": [
         30,
         20,
@@ -523,18 +523,18 @@
     },
     {
       "id": 2,
-      "title": "📝 Prompt — clip_g=角色描述 / clip_l=质量标签",
+      "title": "📝 Prompt — Danbooru 标签格式",
       "bounding": [
         410,
         10,
         500,
-        510
+        460
       ],
       "color": "#8A2BE2"
     },
     {
       "id": 3,
-      "title": "🎨 采样 — Euler 25步, CFG 7, 896×1152",
+      "title": "🎨 采样 — Euler, 25步, CFG 7, 896×1152",
       "bounding": [
         930,
         110,
