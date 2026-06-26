@@ -1,0 +1,247 @@
+{
+  "version": 0.4,
+  "last_node_id": 17,
+  "last_link_id": 21,
+  "nodes": [
+    {
+      "id": 1, "type": "LTXAVTextEncoderLoader", "pos": [50, 50], "size": [318, 122],
+      "flags": {}, "order": 0, "mode": 0,
+      "title": "1. Gemma 3 12B 编码 (LTXAVTextEncoderLoader)",
+      "inputs": [],
+      "outputs": [{"name": "CLIP", "type": "CLIP", "links": [1, 2]}],
+      "properties": {"Node name for S&R": "LTXAVTextEncoderLoader"},
+      "widgets_values": ["gemma_3_12B_it_fp8_scaled.safetensors", "ltx-2.3_text_projection_bf16.safetensors", "default"]
+    },
+    {
+      "id": 2, "type": "CLIPTextEncode", "pos": [450, 30], "size": [450, 200],
+      "flags": {}, "order": 1, "mode": 0,
+      "title": "2. 正向Prompt",
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 1},
+        {"name": "text", "type": "STRING", "widget": {"name": "text"}, "link": null}
+      ],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "links": [5]}],
+      "widgets_values": [
+        "A badminton player leaping high and smashing the shuttlecock, smooth dynamic motion, indoor badminton court, athletic movement, realistic sports action, 4K"
+      ]
+    },
+    {
+      "id": 3, "type": "CLIPTextEncode", "pos": [450, 260], "size": [450, 150],
+      "flags": {}, "order": 2, "mode": 0,
+      "title": "3. 负向Prompt",
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 2},
+        {"name": "text", "type": "STRING", "widget": {"name": "text"}, "link": null}
+      ],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "links": [6]}],
+      "widgets_values": [
+        "blurry, jittery, low quality, distorted, bad motion, static image, still frame, no movement, ugly, watermark, text"
+      ]
+    },
+    {
+      "id": 4, "type": "LTXVConditioning", "pos": [450, 440], "size": [340, 82],
+      "flags": {}, "order": 3, "mode": 0,
+      "title": "4. LTXV Conditioning (25fps)",
+      "inputs": [
+        {"name": "positive", "type": "CONDITIONING", "link": 5},
+        {"name": "negative", "type": "CONDITIONING", "link": 6},
+        {"name": "frame_rate", "type": "FLOAT", "widget": {"name": "frame_rate"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "positive", "type": "CONDITIONING", "links": [7]},
+        {"name": "negative", "type": "CONDITIONING", "links": [21]}
+      ],
+      "widgets_values": [25.0]
+    },
+    {
+      "id": 5, "type": "UNETLoader", "pos": [50, 180], "size": [340, 82],
+      "flags": {}, "order": 4, "mode": 0,
+      "title": "5. LTX-2.3 UNet (23GB, mxfp8)",
+      "inputs": [
+        {"name": "unet_name", "type": "COMBO", "widget": {"name": "unet_name"}, "link": null},
+        {"name": "weight_dtype", "type": "COMBO", "widget": {"name": "weight_dtype"}, "link": null}
+      ],
+      "outputs": [{"name": "MODEL", "type": "MODEL", "links": [9]}],
+      "widgets_values": ["ltx-2.3-22b-distilled-1.1_transformer_only_mxfp8_block32.safetensors", "default"]
+    },
+    {
+      "id": 6, "type": "LTX2_NAG", "pos": [50, 290], "size": [340, 106],
+      "flags": {}, "order": 5, "mode": 0,
+      "title": "6. NAG引导 (scale=11, alpha=0.25)",
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 9},
+        {"name": "nag_scale", "type": "FLOAT", "widget": {"name": "nag_scale"}, "link": null},
+        {"name": "nag_alpha", "type": "FLOAT", "widget": {"name": "nag_alpha"}, "link": null},
+        {"name": "nag_tau", "type": "FLOAT", "widget": {"name": "nag_tau"}, "link": null}
+      ],
+      "outputs": [{"name": "MODEL", "type": "MODEL", "links": [10]}],
+      "widgets_values": [11.0, 0.25, 2.5]
+    },
+    {
+      "id": 7, "type": "LTXICLoRALoaderModelOnly", "pos": [50, 430], "size": [340, 82],
+      "flags": {}, "order": 6, "mode": 0,
+      "title": "7. LoRA (strength=1.0)",
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 10},
+        {"name": "lora_name", "type": "COMBO", "widget": {"name": "lora_name"}, "link": null},
+        {"name": "strength_model", "type": "FLOAT", "widget": {"name": "strength_model"}, "link": null}
+      ],
+      "outputs": [{"name": "MODEL", "type": "MODEL", "links": [11]}],
+      "widgets_values": ["ltx-2.3-22b-distilled-lora-dynamic_fro09_avg_rank_105_bf16.safetensors", 1.0]
+    },
+    {
+      "id": 8, "type": "VAELoader", "pos": [50, 550], "size": [340, 58],
+      "flags": {}, "order": 7, "mode": 0,
+      "title": "8. LTX Video VAE (1.4GB)",
+      "inputs": [
+        {"name": "vae_name", "type": "COMBO", "widget": {"name": "vae_name"}, "link": null}
+      ],
+      "outputs": [{"name": "VAE", "type": "VAE", "links": [12]}],
+      "widgets_values": ["LTX23_video_vae_bf16.safetensors"]
+    },
+    {
+      "id": 9, "type": "EmptyLTXVLatentVideo", "pos": [450, 560], "size": [340, 106],
+      "flags": {}, "order": 8, "mode": 0,
+      "title": "9. 视频画布 (768x512, 49帧≈2秒)",
+      "inputs": [
+        {"name": "width", "type": "INT", "widget": {"name": "width"}, "link": null},
+        {"name": "height", "type": "INT", "widget": {"name": "height"}, "link": null},
+        {"name": "length", "type": "INT", "widget": {"name": "length"}, "link": null},
+        {"name": "batch_size", "type": "INT", "widget": {"name": "batch_size"}, "link": null}
+      ],
+      "outputs": [{"name": "LATENT", "type": "LATENT", "links": [13]}],
+      "widgets_values": [768, 512, 49, 1]
+    },
+    {
+      "id": 10, "type": "CFGGuider", "pos": [450, 700], "size": [340, 82],
+      "flags": {}, "order": 9, "mode": 0,
+      "title": "10. CFG引导 (cfg=1.0)",
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 11},
+        {"name": "positive", "type": "CONDITIONING", "link": 7},
+        {"name": "negative", "type": "CONDITIONING", "link": 21},
+        {"name": "cfg", "type": "FLOAT", "widget": {"name": "cfg"}, "link": null}
+      ],
+      "outputs": [{"name": "GUIDER", "type": "GUIDER", "links": [14]}],
+      "widgets_values": [1.0]
+    },
+    {
+      "id": 11, "type": "LTXVScheduler", "pos": [900, 560], "size": [340, 130],
+      "flags": {}, "order": 10, "mode": 0,
+      "title": "11. LTXV调度器 (20步)",
+      "inputs": [
+        {"name": "steps", "type": "INT", "widget": {"name": "steps"}, "link": null},
+        {"name": "max_shift", "type": "FLOAT", "widget": {"name": "max_shift"}, "link": null},
+        {"name": "base_shift", "type": "FLOAT", "widget": {"name": "base_shift"}, "link": null},
+        {"name": "stretch", "type": "BOOLEAN", "widget": {"name": "stretch"}, "link": null},
+        {"name": "terminal", "type": "FLOAT", "widget": {"name": "terminal"}, "link": null}
+      ],
+      "outputs": [{"name": "SIGMAS", "type": "SIGMAS", "links": [15]}],
+      "widgets_values": [20, 2.05, 0.95, true, 0.1]
+    },
+    {
+      "id": 12, "type": "KSamplerSelect", "pos": [900, 720], "size": [340, 58],
+      "flags": {}, "order": 11, "mode": 0,
+      "title": "12. 采样器 (euler)",
+      "inputs": [
+        {"name": "sampler_name", "type": "COMBO", "widget": {"name": "sampler_name"}, "link": null}
+      ],
+      "outputs": [{"name": "SAMPLER", "type": "SAMPLER", "links": [16]}],
+      "widgets_values": ["euler"]
+    },
+    {
+      "id": 13, "type": "RandomNoise", "pos": [900, 810], "size": [340, 58],
+      "flags": {}, "order": 12, "mode": 0,
+      "title": "13. 随机噪声 (seed=777)",
+      "inputs": [
+        {"name": "noise_seed", "type": "INT", "widget": {"name": "noise_seed"}, "link": null}
+      ],
+      "outputs": [{"name": "NOISE", "type": "NOISE", "links": [17]}],
+      "widgets_values": [777, "randomize"]
+    },
+    {
+      "id": 14, "type": "SamplerCustomAdvanced", "pos": [900, 900], "size": [340, 130],
+      "flags": {}, "order": 13, "mode": 0,
+      "title": "14. 高级采样器",
+      "inputs": [
+        {"name": "noise", "type": "NOISE", "link": 17},
+        {"name": "guider", "type": "GUIDER", "link": 14},
+        {"name": "sampler", "type": "SAMPLER", "link": 16},
+        {"name": "sigmas", "type": "SIGMAS", "link": 15},
+        {"name": "latent_image", "type": "LATENT", "link": 13}
+      ],
+      "outputs": [
+        {"name": "output", "type": "LATENT", "links": [18]},
+        {"name": "denoised_output", "type": "LATENT", "links": []}
+      ],
+      "widgets_values": []
+    },
+    {
+      "id": 15, "type": "LTXVTiledVAEDecode", "pos": [1300, 560], "size": [340, 154],
+      "flags": {}, "order": 14, "mode": 0,
+      "title": "15. 分块VAE解码 (2x2 tiles)",
+      "inputs": [
+        {"name": "vae", "type": "VAE", "link": 12},
+        {"name": "latents", "type": "LATENT", "link": 18},
+        {"name": "horizontal_tiles", "type": "INT", "widget": {"name": "horizontal_tiles"}, "link": null},
+        {"name": "vertical_tiles", "type": "INT", "widget": {"name": "vertical_tiles"}, "link": null},
+        {"name": "overlap", "type": "INT", "widget": {"name": "overlap"}, "link": null},
+        {"name": "last_frame_fix", "type": "BOOLEAN", "widget": {"name": "last_frame_fix"}, "link": null}
+      ],
+      "outputs": [{"name": "image", "type": "IMAGE", "links": [19]}],
+      "widgets_values": [2, 2, 6, false]
+    },
+    {
+      "id": 16, "type": "CreateVideo", "pos": [1300, 750], "size": [280, 82],
+      "flags": {}, "order": 15, "mode": 0,
+      "title": "16. 帧→视频 (25fps)",
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 19},
+        {"name": "fps", "type": "FLOAT", "widget": {"name": "fps"}, "link": null}
+      ],
+      "outputs": [{"name": "VIDEO", "type": "VIDEO", "links": [20]}],
+      "widgets_values": [25.0]
+    },
+    {
+      "id": 17, "type": "SaveVideo", "pos": [1300, 870], "size": [315, 106],
+      "flags": {}, "order": 16, "mode": 0,
+      "title": "17. 保存视频 (output/ltx_gemma_badminton_*.mp4)",
+      "inputs": [
+        {"name": "video", "type": "VIDEO", "link": 20},
+        {"name": "filename_prefix", "type": "STRING", "widget": {"name": "filename_prefix"}, "link": null},
+        {"name": "format", "type": "COMBO", "widget": {"name": "format"}, "link": null},
+        {"name": "codec", "type": "COMBO", "widget": {"name": "codec"}, "link": null}
+      ],
+      "outputs": [],
+      "widgets_values": ["ltx_gemma_badminton", "mp4", "h264"]
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "CLIP"],
+    [2, 1, 0, 3, 0, "CLIP"],
+    [5, 2, 0, 4, 0, "CONDITIONING"],
+    [6, 3, 0, 4, 1, "CONDITIONING"],
+    [7, 4, 0, 10, 1, "CONDITIONING"],
+    [21, 4, 1, 10, 2, "CONDITIONING"],
+    [9, 5, 0, 6, 0, "MODEL"],
+    [10, 6, 0, 7, 0, "MODEL"],
+    [11, 7, 0, 10, 0, "MODEL"],
+    [12, 8, 0, 15, 0, "VAE"],
+    [13, 9, 0, 14, 4, "LATENT"],
+    [14, 10, 0, 14, 1, "GUIDER"],
+    [15, 11, 0, 14, 3, "SIGMAS"],
+    [16, 12, 0, 14, 2, "SAMPLER"],
+    [17, 13, 0, 14, 0, "NOISE"],
+    [18, 14, 0, 15, 1, "LATENT"],
+    [19, 15, 0, 16, 0, "IMAGE"],
+    [20, 16, 0, 17, 0, "VIDEO"]
+  ],
+  "groups": [
+    {"id":1,"title":"📝 Gemma 3 12B 编码 — LTXAVTextEncoderLoader → Conditioning","bounding":[30,20,800,530],"color":"#8A2BE2"},
+    {"id":2,"title":"🧠 模型 — LTX UNet + NAG + LoRA + VAE","bounding":[30,160,380,480],"color":"#3f789e"},
+    {"id":3,"title":"🎬 采样 — Scheduler + Sampler + Noise → AdvancedSampler","bounding":[880,540,390,520],"color":"#e67e22"},
+    {"id":4,"title":"🖼️ 输出 — Tiled Decode → Video → Save","bounding":[1280,540,350,460],"color":"#27ae60"}
+  ],
+  "config": {},
+  "extra": {}
+}
