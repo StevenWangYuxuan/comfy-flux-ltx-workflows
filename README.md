@@ -2,7 +2,7 @@
 
 > **一句话说清楚**：给 AI 写一段话描述你想要的画面，它先生成一张高清图片，再让这张图片"动起来"变成视频。
 
-这个项目包含 7 个 ComfyUI 工作流，覆盖写实风格（FLUX）和动漫风格（Animagine XL），从最简单的"文字→图片"到最复杂的"文字→图片→视频"都有。
+这个项目包含 8 个 ComfyUI 工作流，覆盖写实风格（FLUX）、动漫风格（Animagine XL）、人脸参考生成（IP-Adapter），从最简单的"文字→图片"到最复杂的"文字→图片→视频"都有。
 
 ---
 
@@ -25,6 +25,7 @@
 |-------------|-------------|------|
 | 输入一段文字，输出一张写实照片 | `flux_text2img` | ⭐ 入门 |
 | 输入一段文字，输出一张动漫头像 | `anime_portrait` | ⭐ 入门 |
+| 输入一张脸 + 文字，生成同一个人不同造型 | `ipadapter_portrait` | ⭐⭐ 进阶 |
 | 输入一张图 + 一段文字，输出变体图 | `flux_img2img` | ⭐ 入门 |
 | 输入文字描述，输出 3 秒短视频 | `ltx_txt2vid` | ⭐⭐ 进阶 |
 | 输入两段文字，先生成首帧再变成视频（画质最高） | `flux_ltx_i2v_v2` ★ | ⭐⭐⭐ 高级 |
@@ -71,6 +72,7 @@ comfy/                                    # 🏠 项目根目录
 │
 ├── 🎨 工作流文件（直接拖进 ComfyUI 就能用）
 │   ├── anime_portrait.json              # SDXL 动漫头像 — "标签 → 动漫角色"（省显存）
+│   ├── ipadapter_portrait.json          # IP-Adapter 人脸参考 — "一张脸 → 各种造型"
 │   ├── flux_text2img.json               # FLUX 文生图 — "一段话 → 一张图"
 │   ├── flux_img2img.json                # FLUX 图生图 — "参考图 + 一段话 → 新图"
 │   ├── flux_ltx_i2v.json                # FLUX→LTX 基线版 — "两段话 → 3秒视频"
@@ -87,6 +89,7 @@ comfy/                                    # 🏠 项目根目录
 │
 ├── 🖼️ assets/                           # 示例图片和视频
 │   ├── anime_portrait_demo.png          # 动漫头像效果展示
+│   ├── ipadapter_demo.png               # IP-Adapter 人脸参考效果
 │   ├── flux_text2img_demo.png           # 文生图效果展示
 │   ├── flux_img2img_demo.png            # 图生图效果展示
 │   ├── flux_ltx_i2v_frame.png           # 图生视频首帧展示
@@ -210,7 +213,50 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 2. FLUX 文生图 (`flux_text2img.json`) — 写实风格
+### 2. IP-Adapter 人脸参考 (`ipadapter_portrait.json`) 🆕
+
+> **这是什么**：给 AI 一张人脸照片 + 一段风格描述，它生成**同一个人的不同造型**——换服装、换场景、换表情，但脸保持一致。
+>
+> **什么时候用**：你想把自己或朋友"动漫化"，或者给同一个角色做不同造型的设定图。
+
+**怎么用：**
+
+1. 拖入 `ipadapter_portrait.json`
+2. 节点 2（LoadImage）：选一张**正脸清晰**的参考照片
+3. 节点 5（正向 Prompt）：写服装/场景/风格，**不要写脸**（发色眼型由参考图决定）
+4. 点击 Queue Prompt
+
+**关键参数：**
+
+| 参数 | 默认值 | 是什么意思 |
+|------|--------|-----------|
+| weight (节点4) | 0.75 | 人脸相似度。0.5=微调，0.85=很像，1.2=死扣但可能变形 |
+| weight_type | ease in-out | 渐进式注入，比 standard 更平滑 |
+| combine_embeds | concat | 消除波浪纹的关键参数 |
+| embeds_scaling | K+V | 同时在 Key 和 Value 上施加影响 |
+| preset (节点3) | PLUS (high strength) | SDXL 动漫模型配套，不动 |
+
+**Prompt 写作核心规则：**
+
+```
+❌ 不要写脸：头发颜色、眼型、脸型 — 这些由参考图决定
+✅ 只写这些：服装、表情、姿势、场景、画风、光线
+```
+
+**模型依赖（额外下载）：**
+- IP-Adapter 插件：`ComfyUI_IPAdapter_plus`（需通过 ComfyUI Manager 或 git clone 安装）
+- IP-Adapter 权重：`ip-adapter-plus_sdxl_vit-h.safetensors`（809 MB，放 `models/ipadapter/`）
+- CLIP Vision：`CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors`（2.4 GB，放 `models/clip_vision/`）
+
+| 对比 | 纯动漫头像 | IP-Adapter |
+|------|-----------|------------|
+| 人脸来源 | AI 随机生成 | **你指定的参考图** |
+| 角色一致性 | 每次不同 | **同一个人** |
+| 适合 | 探索各种角色 | 固定角色+不同造型 |
+
+---
+
+### 3. FLUX 文生图 (`flux_text2img.json`) — 写实风格
 
 > **这是什么**：给 AI 一段描述文字，它给你画出来。
 >
@@ -240,7 +286,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 3. FLUX 图生图 (`flux_img2img.json`)
+### 4. FLUX 图生图 (`flux_img2img.json`)
 
 > **这是什么**：给 AI 一张参考图 + 一段描述，它在原图基础上按你的要求修改。
 >
@@ -266,7 +312,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 4. FLUX→LTX 图生视频 v2 ★ (`flux_ltx_i2v_v2.json`)
+### 5. FLUX→LTX 图生视频 v2 ★ (`flux_ltx_i2v_v2.json`)
 
 > **这是什么**：项目最核心的工作流。分两步走——
 > 1. **FLUX 先生成一张静态图**（首帧画面）
@@ -327,7 +373,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 5. LTX 文生视频 (`ltx_txt2vid.json`)
+### 6. LTX 文生视频 (`ltx_txt2vid.json`)
 
 > **这是什么**：跳过 FLUX，直接从文字生成视频。
 >
@@ -459,7 +505,7 @@ ps aux | grep main.py
 | 2026-06-23 | 迁移到 FLUX.1-DEV，下载全部模型 |
 | 2026-06-24 | 创造 FLUX+LTX 组合工作流，Gemma 替代 T5 编码器 |
 | 2026-06-25 | 引入 STG 时空引导，发布 v2 稳定版，FP8 优化 |
-| 2026-06-26 | 新增动漫头像工作流 (Animagine XL 4.0)，清理 40GB 冗余模型，完善文档，上传 GitHub |
+| 2026-06-26 | 新增动漫头像 (Animagine XL 4.0) + IP-Adapter 人脸参考，清理 40GB 冗余模型，上传 GitHub |
 
 ---
 
