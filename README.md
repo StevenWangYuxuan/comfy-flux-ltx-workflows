@@ -66,8 +66,8 @@
 
 ```bash
 cd ~/comfy
-bash download_models.sh    # 下载全部 15 个模型 (~85GB)
-bash download_extras.sh    # 可选模型 + IP-Adapter 插件
+bash download_models.sh / download_models.py   # 下载全部 15 个模型 (~85GB)
+bash download_extras.sh                        # 可选模型 + IP-Adapter 插件
 ```
 
 ### 2. 启动 ComfyUI
@@ -77,6 +77,11 @@ cd ~/comfy/ComfyUI
 
 # 标准启动
 venv/bin/python main.py --listen 127.0.0.1
+
+# 作者本人启动指令 （--lowvram）用于调节显存不足问题
+cd /home/steven/comfy/ComfyUI
+source venv/bin/activate
+python main.py --lowvram
 
 # 24GB 显卡优化启动（RTX 3090 Ti）
 # --lowvram: 按需加载模型，用完即卸载到内存
