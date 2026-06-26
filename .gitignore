@@ -1,0 +1,35 @@
+# ComfyUI (submodule or local install - don't track)
+ComfyUI/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Models (too large for git)
+models/
+*.safetensors
+
+# Output
+output/
+temp/
+*.mp4
+*.png
+*.jpg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ComfyUI runtime
+*.log
+
+# Claude Code local config (contains API tokens)
+.claude/

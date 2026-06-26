@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "comfyui": {
+      "command": "/home/steven/comfy/ComfyUI/venv/bin/python",
+      "args": ["/home/steven/comfy/ComfyUI/mcp_server.py"],
+      "env": {
+        "COMFYUI_URL": "http://127.0.0.1:8188",
+        "COMFYUI_OUTPUT_DIR": "/home/steven/comfy/ComfyUI/output",
+        "ALL_PROXY": "",
+        "all_proxy": "",
+        "HTTP_PROXY": "",
+        "HTTPS_PROXY": "",
+        "http_proxy": "",
+        "https_proxy": "",
+        "NO_PROXY": "localhost,127.0.0.0/8,::1",
+        "no_proxy": "localhost,127.0.0.0/8,::1"
+      }
+    }
+  }
+}
