@@ -2,7 +2,7 @@
 
 > **一句话说清楚**：给 AI 写一段话描述你想要的画面，它先生成一张高清图片，再让这张图片"动起来"变成视频。
 
-这个项目包含 6 个 ComfyUI 工作流，从最简单的"文字→图片"到最复杂的"文字→图片→视频"都有。
+这个项目包含 7 个 ComfyUI 工作流，覆盖写实风格（FLUX）和动漫风格（Animagine XL），从最简单的"文字→图片"到最复杂的"文字→图片→视频"都有。
 
 ---
 
@@ -23,7 +23,8 @@
 
 | 你想要的效果 | 用这个工作流 | 难度 |
 |-------------|-------------|------|
-| 输入一段文字，输出一张图 | `flux_text2img` | ⭐ 入门 |
+| 输入一段文字，输出一张写实照片 | `flux_text2img` | ⭐ 入门 |
+| 输入一段文字，输出一张动漫头像 | `anime_portrait` | ⭐ 入门 |
 | 输入一张图 + 一段文字，输出变体图 | `flux_img2img` | ⭐ 入门 |
 | 输入文字描述，输出 3 秒短视频 | `ltx_txt2vid` | ⭐⭐ 进阶 |
 | 输入两段文字，先生成首帧再变成视频（画质最高） | `flux_ltx_i2v_v2` ★ | ⭐⭐⭐ 高级 |
@@ -52,6 +53,12 @@
 
 🎥 **生成的视频**：[点击下载观看](assets/hypercar_demo.mp4) — 超跑从静止到弹射起步的 3 秒连贯视频
 
+### SDXL 动漫头像 — 银发少女
+
+![动漫头像示例](assets/anime_portrait_demo.png)
+
+*工作流: `anime_portrait.json` | 模型: Animagine XL 4.0 | 分辨率: 896×1152 | Euler 25步*
+
 ---
 
 ## 📁 项目文件说明
@@ -63,6 +70,7 @@ comfy/                                    # 🏠 项目根目录
 ├── 📖 flux_ltx_i2v_文档.md              # 组合工作流完整参数文档（进阶阅读）
 │
 ├── 🎨 工作流文件（直接拖进 ComfyUI 就能用）
+│   ├── anime_portrait.json              # SDXL 动漫头像 — "标签 → 动漫角色"（省显存）
 │   ├── flux_text2img.json               # FLUX 文生图 — "一段话 → 一张图"
 │   ├── flux_img2img.json                # FLUX 图生图 — "参考图 + 一段话 → 新图"
 │   ├── flux_ltx_i2v.json                # FLUX→LTX 基线版 — "两段话 → 3秒视频"
@@ -78,6 +86,7 @@ comfy/                                    # 🏠 项目根目录
 │   └── fix_workflow_links.py            # 修复工作流节点连接
 │
 ├── 🖼️ assets/                           # 示例图片和视频
+│   ├── anime_portrait_demo.png          # 动漫头像效果展示
 │   ├── flux_text2img_demo.png           # 文生图效果展示
 │   ├── flux_img2img_demo.png            # 图生图效果展示
 │   ├── flux_ltx_i2v_frame.png           # 图生视频首帧展示
@@ -140,7 +149,68 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ## 📘 工作流详细介绍
 
-### 1. FLUX 文生图 (`flux_text2img.json`)
+### 1. SDXL 动漫头像 (`anime_portrait.json`) 🆕
+
+> **这是什么**：用 Danbooru 标签（如 `1girl, silver hair, purple eyes`）描述角色，AI 生成纯正动漫风格的头像/立绘。
+>
+> **什么时候用**：你想要动漫角色图、头像、漫画风格插画，而且不想折腾复杂的 FLUX 参数。
+
+**怎么用：**
+
+1. 拖入 `anime_portrait.json`
+2. 节点 2（正向提示词）：用 **Danbooru 标签** 写角色描述
+3. 节点 3（负向提示词）：排除写实、3D、低质量
+4. 节点 4：调整分辨率（默认 896×1152 竖版）
+5. 点击 Queue Prompt
+
+**Prompt 格式 — Danbooru 标签：**
+
+```
+✅ 正确写法（标签式，逗号分隔）：
+   "1girl, solo, silver hair, long hair, purple eyes, portrait, 
+    white dress, soft smile, looking at viewer, anime coloring,
+    masterpiece, best quality, absurdres"
+
+❌ 错误写法（自然语言，SDXL 动漫模型不理解）：
+   "请画一个银发紫瞳的动漫少女，穿着白色连衣裙，微笑看向镜头"
+```
+
+**Prompt 标签速查：**
+
+| 类别 | 常用标签 |
+|------|---------|
+| 角色 | `1girl`, `1boy`, `solo`, `looking at viewer` |
+| 发型 | `silver hair`, `long hair`, `short hair`, `bangs`, `ahoge` |
+| 眼睛 | `purple eyes`, `blue eyes`, `red eyes`, `detailed eyes` |
+| 表情 | `smile`, `soft smile`, `cool expression`, `gentle expression` |
+| 服装 | `white dress`, `school uniform`, `hoodie`, `lace trim` |
+| 画质 | `masterpiece`, `best quality`, `absurdres`, `highres` |
+| 风格 | `anime coloring`, `cel shading`, `line art`, `depth of field` |
+| 背景 | `pastel background`, `gradient sky`, `bokeh`, `simple background` |
+
+**和 FLUX 文生图的对比：**
+
+| | FLUX 文生图 | SDXL 动漫头像 |
+|------|-------------|---------------|
+| 模型 | FLUX.1-dev (23GB) | Animagine XL 4.0 (6.5GB) |
+| 显存 | 16-24 GB | **8-12 GB** |
+| 风格 | 写实/电影感 | **纯正动漫/漫画** |
+| Prompt | 自然语言 | Danbooru 标签 |
+| 出图速度 | 较慢 | **快 ~3 倍** |
+
+**关键参数：**
+
+| 参数 | 默认值 | 是什么意思 |
+|------|--------|-----------|
+| width/height | 896/1152 | 竖版头像。可改为 1024×1024 方形 |
+| steps | 25 | 20-28 最佳。太低粗糙，太高浪费 |
+| CFG | 7 | SDXL 动漫推荐 5-8。越低越自由，越高越贴 Prompt |
+| sampler | euler | 动漫首选。euler_ancestral 风格更随机 |
+| scheduler | normal | normal 或 karras 都可以 |
+
+---
+
+### 2. FLUX 文生图 (`flux_text2img.json`) — 写实风格
 
 > **这是什么**：给 AI 一段描述文字，它给你画出来。
 >
@@ -170,7 +240,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 2. FLUX 图生图 (`flux_img2img.json`)
+### 3. FLUX 图生图 (`flux_img2img.json`)
 
 > **这是什么**：给 AI 一张参考图 + 一段描述，它在原图基础上按你的要求修改。
 >
@@ -196,7 +266,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 3. FLUX→LTX 图生视频 v2 ★ (`flux_ltx_i2v_v2.json`)
+### 4. FLUX→LTX 图生视频 v2 ★ (`flux_ltx_i2v_v2.json`)
 
 > **这是什么**：项目最核心的工作流。分两步走——
 > 1. **FLUX 先生成一张静态图**（首帧画面）
@@ -257,7 +327,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128 \
 
 ---
 
-### 4. LTX 文生视频 (`ltx_txt2vid.json`)
+### 5. LTX 文生视频 (`ltx_txt2vid.json`)
 
 > **这是什么**：跳过 FLUX，直接从文字生成视频。
 >
@@ -338,6 +408,14 @@ ps aux | grep main.py
 | `text_encoders/t5xxl_fp16.safetensors` | 9.2 GB | 📖 同上，更精确但更吃显存 |
 | `vae/ae.safetensors` | 320 MB | 🖼️ 图像压缩/解压 |
 
+### SDXL 动漫系列（负责生成动漫角色）
+
+| 文件 | 大小 | 做什么的 |
+|------|------|---------|
+| `checkpoints/animagine-xl-4.0.safetensors` | 6.5 GB | 🎨 SDXL 动漫模型，840万张动漫图训练 |
+
+> 💡 SDXL 模型自带 CLIP 和 VAE，不需要额外下载文本编码器和 VAE。
+
 ### LTX 系列（负责生成视频）
 
 | 文件 | 大小 | 做什么的 |
@@ -348,20 +426,22 @@ ps aux | grep main.py
 | `vae/LTX23_video_vae_bf16.safetensors` | 1.4 GB | 🎞️ 视频压缩/解压 |
 | `loras/ltx-2.3-22b-distilled-lora-...bf16.safetensors` | 2.5 GB | 💪 动态增强插件 |
 
-**总计：~78 GB**
+**总计：~84.5 GB**（FLUX ~37GB + SDXL ~6.5GB + LTX ~41GB）
 
 ---
 
 ## 💻 硬件要求
 
-| 显卡 | 显存 | 文生图 | 图生图 | 图生视频 | 纯文生视频 |
-|------|------|--------|--------|----------|-----------|
-| RTX 3060 (12GB) | 12 GB | ❌ | ❌ | ❌ | ❌ |
-| RTX 4070 (12GB) | 12 GB | ❌ | ❌ | ❌ | ❌ |
-| RTX 3090 (24GB) | 24 GB | ✅ | ✅ | ⚠️ 需优化 | ✅ |
-| RTX 4090 (24GB) | 24 GB | ✅ | ✅ | ⚠️ 需优化 | ✅ |
-| A6000 (48GB) | 48 GB | ✅ | ✅ | ✅ | ✅ |
-| A100 (80GB) | 80 GB | ✅ | ✅ | ✅ | ✅ |
+| 显卡 | 显存 | 动漫头像 | 文生图 | 图生图 | 图生视频 | 纯文生视频 |
+|------|------|----------|--------|--------|----------|-----------|
+| RTX 3060 (12GB) | 12 GB | ✅ 流畅 | ❌ | ❌ | ❌ | ❌ |
+| RTX 4070 (12GB) | 12 GB | ✅ 流畅 | ❌ | ❌ | ❌ | ❌ |
+| RTX 3090 (24GB) | 24 GB | ✅ 秒出 | ✅ | ✅ | ⚠️ 需优化 | ✅ |
+| RTX 4090 (24GB) | 24 GB | ✅ 秒出 | ✅ | ✅ | ⚠️ 需优化 | ✅ |
+| A6000 (48GB) | 48 GB | ✅ | ✅ | ✅ | ✅ | ✅ |
+| A100 (80GB) | 80 GB | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+> 🎉 **好消息**：动漫头像工作流只需 8-12GB 显存，连 12GB 入门卡都能流畅运行！
 
 **24GB 显卡跑图生视频的优化方法：**
 1. 分辨率降到 768×432
@@ -379,7 +459,7 @@ ps aux | grep main.py
 | 2026-06-23 | 迁移到 FLUX.1-DEV，下载全部模型 |
 | 2026-06-24 | 创造 FLUX+LTX 组合工作流，Gemma 替代 T5 编码器 |
 | 2026-06-25 | 引入 STG 时空引导，发布 v2 稳定版，FP8 优化 |
-| 2026-06-26 | 清理 40GB 冗余模型，完善文档，上传 GitHub |
+| 2026-06-26 | 新增动漫头像工作流 (Animagine XL 4.0)，清理 40GB 冗余模型，完善文档，上传 GitHub |
 
 ---
 
